@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICPMS Analysis Form</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+  :root{
+    --bg:#f4f1ea;--surface:#fff;--border:#c8c0b0;--border-strong:#6b5f4e;
+    --accent:#1a3a5c;--accent2:#c84b1a;--accent3:#1a6e3a;
+    --text:#1c1813;--text-muted:#7a6f62;--row-alt:#f9f7f3;
+    --invalid:#fde8e0;--invalid-border:#c84b1a;
+    --clr-lr:#c84b1a;--clr-mr:#1a6e3a;--clr-hr:#6b2d9e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'IBM Plex Sans',sans-serif;color:var(--text);min-height:100vh;padding:32px 16px 80px;}
+  .page{max-width:980px;margin:0 auto;background:var(--surface);border:2px solid var(--border-strong);box-shadow:6px 6px 0 var(--border-strong);}
+  .header{background:var(--accent);color:#fff;padding:16px 24px;}
+
+  .header h1{font-size:14px;font-weight:600;letter-spacing:.04em;line-height:1.3;}
+  .header h1 span{display:block;font-weight:300;font-size:11px;opacity:.75;margin-top:2px;}
+  .section{border-bottom:1px solid var(--border);}
+  .section-header{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);background:var(--row-alt);padding:7px 20px;border-bottom:1px solid var(--border);}
+  .field-row{display:grid;grid-template-columns:190px 1fr;border-bottom:1px solid var(--border);min-height:42px;}
+  .field-row:last-child{border-bottom:none;}
+  .field-label{font-size:12px;font-weight:600;color:var(--text-muted);padding:9px 14px;border-right:1px solid var(--border);display:flex;align-items:center;background:var(--row-alt);}
+  .field-content{padding:7px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+  .text-input{font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--text);border:none;border-bottom:1.5px solid var(--border);background:transparent;padding:2px 4px;outline:none;min-width:120px;flex:1;transition:border-color .15s;}
+  .text-input:focus{border-bottom-color:var(--accent);}
+  .text-input.full{width:100%;min-width:unset;}
+  .text-input.invalid{border-bottom-color:var(--invalid-border);background:var(--invalid);}
+  .inline-label{font-size:12px;font-weight:600;color:var(--text-muted);margin-right:4px;white-space:nowrap;}
+  .info-two-col{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+  .info-cell{display:flex;align-items:center;padding:9px 14px;gap:8px;font-size:13px;}
+  .info-cell:first-child{border-right:1px solid var(--border);}
+  .cb-label,.rb-label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;user-select:none;position:relative;}
+  .cb-label input,.rb-label input{position:absolute;opacity:0;width:0;height:0;}
+  .cb-box{width:16px;height:16px;border:1.8px solid var(--border-strong);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s,border-color .12s;}
+  .cb-label input:checked~.cb-box{background:var(--accent);border-color:var(--accent);}
+  .cb-box::after{content:'';width:8px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);opacity:0;transition:opacity .1s;}
+  .cb-label input:checked~.cb-box::after{opacity:1;}
+  .rb-box{width:16px;height:16px;border-radius:50%;border:1.8px solid var(--border-strong);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s;}
+  .rb-box::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;opacity:0;transition:opacity .1s;}
+  .rb-label input:checked~.rb-box{background:var(--accent);border-color:var(--accent);}
+  .rb-label input:checked~.rb-box::after{opacity:1;}
+  .checkbox-group,.radio-group{display:flex;flex-wrap:wrap;gap:8px 16px;}
+  .sample-name-block{display:flex;flex-direction:column;gap:6px;padding:8px 14px;}
+  .sn-groups{display:flex;gap:10px;flex-wrap:wrap;}
+  .sn-group{border:1px solid var(--border);padding:5px 9px;font-size:12px;}
+  .sn-group-label{color:var(--text-muted);font-size:10px;margin-bottom:3px;}
+  .type-sub-rows{display:flex;flex-direction:column;}
+  .type-sub-row{display:grid;grid-template-columns:120px 1fr;border-bottom:1px solid var(--border);min-height:40px;}
+  .type-sub-row:last-child{border-bottom:none;}
+  .type-sub-label{font-size:12px;color:var(--text-muted);padding:8px 12px;border-right:1px solid var(--border);display:flex;align-items:center;}
+  .type-sub-content{padding:7px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+  .pre-row{display:grid;grid-template-columns:190px 180px 1fr;border-bottom:1px solid var(--border);min-height:42px;}
+  .pre-row:last-child{border-bottom:none;}
+  .pre-label{font-size:12px;font-weight:600;color:var(--text-muted);padding:9px 14px;border-right:1px solid var(--border);display:flex;align-items:center;background:var(--row-alt);}
+  .pre-check{padding:7px 14px;display:flex;align-items:center;border-right:1px solid var(--border);}
+  .pre-detail{padding:7px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:12.5px;}
+  .pre-detail-note{font-size:11px;color:var(--text-muted);font-style:italic;line-height:1.5;width:100%;}
+  .digestion-row{display:grid;grid-template-columns:190px 180px 1fr;border-bottom:1px solid var(--border);min-height:80px;}
+  textarea.text-input{resize:vertical;min-height:56px;padding:5px 7px;border:1.5px solid var(--border);font-family:'IBM Plex Sans',sans-serif;font-size:12px;}
+  textarea.text-input:focus{border-color:var(--accent);}
+  /* ── PERIODIC TABLE ── */
+  .pt-section{padding:14px 16px 10px;}
+  .pt-legend{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center;}
+  .pt-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-muted);}
+  .pt-legend-swatch{width:13px;height:13px;border:1px solid var(--border-strong);}
+  .pt-grid{display:grid;gap:2px;grid-template-columns:repeat(18,1fr);width:100%;}
+  /* ── PERIODIC TABLE ELEMENTS: unselected=grey, selected=black bold ── */
+  .el{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #bbb;cursor:pointer;background:#f0f0f0;transition:all .1s;font-size:8px;line-height:1.1;user-select:none;position:relative;border-radius:1px;}
+  .el .sym{font-size:11px;font-weight:500;font-family:'IBM Plex Mono',monospace;color:#111;}
+  .el .num{font-size:6px;color:#666;position:absolute;top:1px;left:2px;}
+  .el:hover{border-color:#333;z-index:2;transform:scale(1.18);box-shadow:0 2px 6px rgba(0,0,0,.2);background:#ddd;}
+  .el.selected-lr,.el.selected-mr,.el.selected-hr{background:#111 !important;border-color:#111 !important;}
+  .el.selected-lr .sym,.el.selected-mr .sym,.el.selected-hr .sym{color:#fff;font-weight:800;font-size:11px;}
+  .el.selected-lr .num,.el.selected-mr .num,.el.selected-hr .num{color:rgba(255,255,255,.5);}
+  .el.selected-lr::after{content:'';position:absolute;bottom:2px;right:2px;width:4px;height:4px;border-radius:50%;background:var(--clr-lr);}
+  .el.selected-mr::after{content:'';position:absolute;bottom:2px;right:2px;width:4px;height:4px;border-radius:50%;background:var(--clr-mr);}
+  .el.selected-hr::after{content:'';position:absolute;bottom:2px;right:2px;width:4px;height:4px;border-radius:50%;background:var(--clr-hr);}
+  .el.spacer{background:transparent!important;border-color:transparent!important;cursor:default;pointer-events:none;}
+  .el.spacer:hover{transform:none;box-shadow:none;}
+  .el.g-alkali,.el.g-earth,.el.g-trans,.el.g-post,.el.g-metal,.el.g-nonmetal,.el.g-halogen,.el.g-noble,.el.g-lant,.el.g-act{background:#f0f0f0;}
+  .selected-list{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;min-height:28px;padding:6px 10px;border:1px dashed var(--border);border-radius:2px;background:var(--row-alt);}
+  .selected-tag{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 7px;color:#fff;border-radius:1px;display:flex;align-items:center;gap:4px;}
+  .selected-tag.t-lr{background:#1a3a5c;}
+  .selected-tag.t-mr{background:var(--clr-mr);}
+  .selected-tag.t-hr{background:var(--clr-hr);}
+  .selected-tag .mode-badge{font-size:9px;opacity:.75;border-left:1px solid rgba(255,255,255,.35);padding-left:4px;}
+  .selected-tag .rm{cursor:pointer;opacity:.7;font-size:10px;margin-left:2px;}
+  .selected-tag .rm:hover{opacity:1;}
+  .pt-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+  .pt-controls span{font-size:11px;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;}
+  .pt-btn{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:4px 10px;border:1px solid var(--border-strong);background:#fff;cursor:pointer;transition:background .1s;}
+  .pt-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .mode-toggle{display:flex;gap:0;align-items:center;font-size:11px;color:var(--text-muted);margin-right:6px;}
+  .mode-toggle .mt-label{font-size:11px;margin-right:6px;color:var(--text-muted);}
+  .mode-toggle input{display:none;}
+  .mode-toggle label{cursor:pointer;padding:4px 10px;border:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;margin-left:-1px;background:#fff;transition:background .1s,color .1s;}
+  .mode-toggle label:first-of-type{border-radius:2px 0 0 2px;}
+  .mode-toggle label:last-of-type{border-radius:0 2px 2px 0;}
+  #mode-lr:checked+label{background:var(--clr-lr);color:#fff;border-color:var(--clr-lr);z-index:1;}
+  #mode-mr:checked+label{background:var(--clr-mr);color:#fff;border-color:var(--clr-mr);z-index:1;}
+  #mode-hr:checked+label{background:var(--clr-hr);color:#fff;border-color:var(--clr-hr);z-index:1;}
+  .std-row{display:grid;grid-template-columns:220px 1fr;border-bottom:1px solid var(--border);min-height:40px;}
+  .std-row:last-child{border-bottom:none;}
+  .memo-block{padding:12px 16px;font-size:12.5px;color:var(--text-muted);line-height:1.8;}
+  .memo-block ol{padding-left:18px;}
+
+  /* ── SCHEDULE SECTION ── */
+  .schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--border);}
+  .schedule-cell{padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;border-right:1px solid var(--border);}
+  .schedule-cell:last-child{border-right:none;}
+  .schedule-cell.full{grid-column:1/3;border-right:none;}
+
+  /* ── SUBMIT PANEL ── */
+  .submit-panel{border-top:2px solid var(--border-strong);background:var(--row-alt);padding:18px 22px;}
+  .submit-panel-title{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;}
+  .submit-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .actions{display:flex;justify-content:flex-end;padding:12px 18px;gap:8px;background:var(--surface);}
+  .btn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.06em;padding:8px 20px;border:1.5px solid var(--border-strong);background:#fff;cursor:pointer;transition:background .12s,color .12s;}
+  .btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn.primary:hover{background:#0e2640;}
+  .btn.danger{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+  .btn.success{background:var(--accent3);color:#fff;border-color:var(--accent3);}
+  .btn.success:hover{background:#105229;}
+  .btn.purple{background:var(--clr-hr);color:#fff;border-color:var(--clr-hr);}
+  .btn.purple:hover{background:#4e1f7a;}
+
+  /* validation */
+  .field-invalid .field-label{color:var(--accent2);}
+  .field-invalid .field-content,.field-invalid .pre-detail,.field-invalid .type-sub-content,.field-invalid .sample-name-block{background:var(--invalid);}
+  .validation-banner{display:none;background:var(--invalid);border:1.5px solid var(--invalid-border);padding:10px 18px;font-size:12px;color:var(--accent2);font-weight:600;margin:10px 16px 0;border-radius:2px;}
+  .validation-banner.show{display:block;}
+
+  /* success banner */
+  .success-banner{display:none;background:#e8f5ed;border:1.5px solid var(--accent3);padding:12px 18px;margin:0 16px;border-radius:2px;font-size:13px;color:var(--accent3);}
+  .success-banner.show{display:block;}
+  .success-banner strong{display:block;font-size:14px;margin-bottom:6px;}
+  .success-links{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
+  .success-link-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 14px;border:1.5px solid;border-radius:2px;cursor:pointer;text-decoration:none;display:inline-block;font-weight:600;}
+  .success-link-btn.gcal{background:#fff;color:#1a6e3a;border-color:#1a6e3a;}
+  .success-link-btn.gcal:hover{background:#1a6e3a;color:#fff;}
+  .success-link-btn.view{background:#fff;color:var(--accent);border-color:var(--accent);}
+  .success-link-btn.view:hover{background:var(--accent);color:#fff;}
+
+  /* modal overlay (normal-flow so iframe sizes correctly) */
+  .modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;}
+  .modal-wrap.open{display:flex;}
+  .modal{background:#fff;border:2px solid var(--border-strong);max-width:794px;width:95vw;max-height:90vh;overflow-y:auto;padding:0;position:relative;}
+  .modal-close{position:absolute;top:10px;right:14px;font-size:20px;cursor:pointer;color:var(--text-muted);background:none;border:none;line-height:1;}
+  .modal-close:hover{color:var(--text);}
+  .modal-header{background:var(--accent);color:#fff;padding:18px 24px 14px;}
+  .modal-header h2{font-size:16px;font-weight:700;letter-spacing:.02em;margin:0 0 6px 0;}
+  .modal-header .modal-meta{font-size:11px;font-family:'IBM Plex Mono',monospace;opacity:.85;letter-spacing:.04em;}
+  .modal-body{padding:20px 24px;}
+  .modal-footer{padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--row-alt);}
+  .review-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .review-table td{padding:6px 10px;border:1px solid var(--border);vertical-align:top;}
+  .review-table td:first-child{font-weight:600;color:var(--text-muted);background:var(--row-alt);width:38%;}
+  .review-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:1px 5px;border-radius:1px;color:#fff;margin-right:3px;display:inline-block;}
+  .review-tag.t-lr{background:var(--clr-lr);}
+  .review-tag.t-mr{background:var(--clr-mr);}
+  .review-tag.t-hr{background:var(--clr-hr);}
+
+  /* ── PDF RENDER TARGET ── */
+  #pdf-render-target{
+    position:fixed;left:-9999px;top:0;
+    width:794px;background:#fff;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:11px;color:#1c1813;
+    padding:0;
+  }
+  .pdf-header{
+    background:#1a3a5c;color:#fff;
+    padding:20px 28px 16px;
+  }
+  .pdf-header h1{font-size:15px;font-weight:700;margin:0 0 4px 0;letter-spacing:.02em;}
+  .pdf-header .pdf-meta{font-family:monospace;font-size:10px;opacity:.8;letter-spacing:.04em;}
+  .pdf-body{padding:16px 24px 24px;}
+  .pdf-section-title{
+    background:#1a3a5c;color:#fff;
+    font-weight:600;font-size:10.5px;
+    padding:5px 10px;margin:12px 0 0 0;
+    letter-spacing:.06em;text-transform:uppercase;
+  }
+  .pdf-table{width:100%;border-collapse:collapse;margin-top:0;}
+  .pdf-table td{
+    padding:5px 10px;border:1px solid #c8c0b0;
+    vertical-align:top;font-size:10.5px;line-height:1.45;
+  }
+  .pdf-table td:first-child{
+    font-weight:600;color:#7a6f62;
+    background:#f9f7f3;width:36%;
+  }
+  .pdf-footer{
+    border-top:1px solid #c8c0b0;
+    padding:10px 24px;font-size:9.5px;
+    color:#aaa;text-align:right;
+    font-family:monospace;
+  }
+  @media print{body{padding:0;background:#fff;}.page{box-shadow:none;border:1px solid #999;}.actions,.submit-panel,.modal-wrap{display:none;}.pt-controls,.mode-toggle,.pt-btn{display:none;}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <h1>ICP-MS / seaFAST 使用申請表
+    <span>ICP-MS / seaFAST Instrument Usage Request Form — Ho-Lab, RCEC</span>
+  </h1>
+</div>
+
+<div class="validation-banner" id="val-banner"></div>
+<div class="success-banner" id="success-banner"></div>
+
+<!-- 01 BASIC INFO -->
+<div class="section">
+  <div class="section-header">Section 1 — Basic Information</div>
+  <div class="field-row">
+    <div class="field-label">Affiliation Lab <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content">
+      <input class="text-input full" id="affiliation" type="text" placeholder="e.g. AS RCEC Ho-Lab">
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-label">Name <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content">
+      <input class="text-input full" id="op-name" type="text" placeholder="Full name">
+    </div>
+  </div>
+  <div class="field-row" id="field-email-row">
+    <div class="field-label">Email <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content" style="flex-wrap:wrap;gap:8px;">
+      <input class="text-input" id="op-email" type="email" placeholder="your@email.com" style="min-width:200px;flex:1;">
+      <label class="cb-label" style="white-space:nowrap;">
+        <input type="checkbox" id="email-as-contact" checked>
+        <span class="cb-box"></span>
+        <span style="font-size:12px;color:var(--text-muted);">Use as Contact (Email)</span>
+      </label>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-label">Tel</div>
+    <div class="field-content">
+      <input class="text-input full" id="op-tel" type="tel" placeholder="Contact phone number">
+    </div>
+  </div>
+  <div class="field-row" style="border-bottom:none;">
+    <div class="field-label">Submission Date <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content">
+      <input class="text-input" id="op-date" type="date">
+    </div>
+  </div>
+</div>
+
+<!-- 02 TYPE OF ANALYSIS REQUESTED -->
+<div class="section">
+  <div class="section-header">Section 2 — Type of Analysis Requested</div>
+  <div class="field-row" id="field-analysistype">
+    <div class="field-label">Analysis Type <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content">
+      <div class="radio-group">
+        <label class="rb-label"><input type="radio" name="analysis-type" id="icpms" value="ICP-MS" checked><span class="rb-box"></span><span>ICP-MS (Inductively Coupled Plasma Mass Spectrometry)</span></label>
+        <label class="rb-label"><input type="radio" name="analysis-type" id="seafast" value="seaFAST"><span class="rb-box"></span><span>seaFAST (Seawater Preconcentration System) followed by ICP-MS</span></label>
+      </div>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-label">Instrument Run Start Date <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content">
+      <input class="text-input" id="run-date-start" type="date" style="min-width:unset;flex:0 0 auto;">
+    </div>
+  </div>
+  <div class="field-row" style="border-bottom:none;">
+    <div class="field-label">Instrument Run End Date <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content">
+      <input class="text-input" id="run-date-end" type="date" style="min-width:unset;flex:0 0 auto;">
+    </div>
+  </div>
+</div>
+
+<!-- 03 SAMPLE INFO -->
+<div class="section">
+  <div class="section-header">Section 3 — Sample Information</div>
+  <div class="field-row" id="field-samplename" style="grid-template-columns:190px 1fr;min-height:auto;">
+    <div class="field-label">Sample ID / Name <span style="color:var(--accent2)">*</span></div>
+    <div class="sample-name-block">
+      <input class="text-input full" id="sample-name" type="text" placeholder="Sample ID or name">
+    </div>
+  </div>
+  <div class="field-row" id="field-sampletype">
+    <div class="field-label">Sample Type <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content" style="flex-direction:column;align-items:flex-start;gap:8px;padding:10px 14px;">
+      <div class="radio-group" style="flex-direction:column;gap:8px;">
+        <label class="rb-label"><input type="radio" name="sample-type" id="st-seawater" value="Seawater"><span class="rb-box"></span><span>Seawater</span></label>
+        <label class="rb-label"><input type="radio" name="sample-type" id="st-aerosol" value="Aerosol"><span class="rb-box"></span><span>Aerosol</span></label>
+        <label class="rb-label"><input type="radio" name="sample-type" id="st-spm" value="SPM"><span class="rb-box"></span><span>SPM</span></label>
+        <label class="rb-label"><input type="radio" name="sample-type" id="st-biological" value="Biological"><span class="rb-box"></span><span>Biological</span></label>
+        <label class="rb-label"><input type="radio" name="sample-type" id="st-sediment" value="Sediment"><span class="rb-box"></span><span>Sediment</span></label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label class="rb-label"><input type="radio" name="sample-type" id="st-other" value="Other"><span class="rb-box"></span><span>Other:</span></label>
+          <input class="text-input" id="st-other-text" type="text" placeholder="Specify…" style="min-width:160px;flex:0 1 auto;">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 03 PRETREATMENT -->
+<div class="section">
+  <div class="section-header">Section 4 — Pretreatment</div>
+  <div class="pre-row">
+    <div class="pre-label">Filtered</div>
+    <div class="pre-check"><div class="radio-group">
+      <label class="rb-label"><input type="radio" name="filtered" value="yes"><span class="rb-box"></span><span>Yes</span></label>
+      <label class="rb-label"><input type="radio" name="filtered" value="no" checked><span class="rb-box"></span><span>No</span></label>
+    </div></div>
+    <div class="pre-detail"><span class="inline-label">Membrane type:</span><input class="text-input" type="text" placeholder="e.g. 0.2 µm PVDF" style="min-width:120px;"></div>
+  </div>
+  <div class="pre-row">
+    <div class="pre-label">Acidified</div>
+    <div class="pre-check"><div class="radio-group">
+      <label class="rb-label"><input type="radio" name="acidified" value="yes"><span class="rb-box"></span><span>Yes</span></label>
+      <label class="rb-label"><input type="radio" name="acidified" value="no" checked><span class="rb-box"></span><span>No</span></label>
+    </div></div>
+    <div class="pre-detail" style="flex-direction:column;align-items:flex-start;">
+      <div style="display:flex;align-items:center;gap:6px;"><span class="inline-label">Acid(s) used:</span><input class="text-input" type="text" placeholder="e.g. HNO₃"></div>
+      <div class="pre-detail-note">Samples not acidified; no internal standards (e.g., In) added to preserve blank conditions.</div>
+    </div>
+  </div>
+  <div class="pre-row">
+    <div class="pre-label">Digestion</div>
+    <div class="pre-check"><div class="radio-group">
+      <label class="rb-label"><input type="radio" name="digestion" value="yes"><span class="rb-box"></span><span>Yes</span></label>
+      <label class="rb-label"><input type="radio" name="digestion" value="no"><span class="rb-box"></span><span>No</span></label>
+    </div></div>
+    <div class="pre-detail" style="align-items:flex-start;">
+      <textarea class="text-input full" placeholder="Acids used, duration, temperature, dry-out, re-dissolved, filter…" rows="2"></textarea>
+    </div>
+  </div>
+  <div class="pre-row">
+    <div class="pre-label">UV Oxidation</div>
+    <div class="pre-check"><div class="radio-group">
+      <label class="rb-label"><input type="radio" name="uv-oxidation" value="yes"><span class="rb-box"></span><span>Yes</span></label>
+      <label class="rb-label"><input type="radio" name="uv-oxidation" value="no" checked><span class="rb-box"></span><span>No</span></label>
+    </div></div>
+    <div class="pre-detail"></div>
+  </div>
+  <div class="pre-row">
+    <div class="pre-label">Chelation / Preconcentration</div>
+    <div class="pre-check"><div class="radio-group">
+      <label class="rb-label"><input type="radio" name="chelation" value="yes"><span class="rb-box"></span><span>Yes</span></label>
+      <label class="rb-label"><input type="radio" name="chelation" value="no" checked><span class="rb-box"></span><span>No</span></label>
+    </div></div>
+    <div class="pre-detail"></div>
+  </div>
+  <div class="pre-row" style="border-bottom:none;">
+    <div class="pre-label">Other</div>
+    <div class="pre-check" style="border-right:none;grid-column:2/4;">
+      <input class="text-input full" type="text" id="pretreat-other" placeholder="Describe any other pretreatment…">
+    </div>
+  </div>
+</div>
+
+<!-- 04 ELEMENTS -->
+<div class="section">
+  <div class="section-header">Section 5 — Analyzed Elements &nbsp;<span style="font-weight:400;opacity:.55;font-size:9px;">Grey = unselected · Click to select (black bold)</span></div>
+  <div class="pt-section">
+    <div class="pt-controls">
+      <button class="pt-btn" onclick="loadPreset()">Load Default Preset</button>
+      <button class="pt-btn" onclick="clearElements()">Clear All</button>
+      <span id="el-count" style="margin-left:auto;font-size:11px;color:var(--text-muted);">0 elements selected</span>
+    </div>
+    <div class="pt-legend">
+      <div class="pt-legend-item"><div class="pt-legend-swatch" style="background:#e8e8e8;border-color:#ccc;"></div>Not selected</div>
+      <div class="pt-legend-item"><div class="pt-legend-swatch" style="background:#111;border-color:#111;"></div>Selected</div>
+    </div>
+    <div class="pt-grid" id="pt-grid"></div>
+    <div style="margin-top:10px;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:4px;">Selected elements:</div>
+      <div class="selected-list" id="selected-list"><span style="font-size:11px;color:var(--text-muted);">None selected</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 06 STANDARDS -->
+<div class="section">
+  <div class="section-header">Section 6 — Standards &amp; Sample Concentration</div>
+  <div class="std-row">
+    <div class="pre-label">Standard Concentration Range <span style="color:var(--accent2)">*</span></div>
+    <div class="pre-detail"><input class="text-input full" id="std-range" type="text" placeholder="e.g. 0.1–10 ppb, with unit"></div>
+  </div>
+  <div class="std-row">
+    <div class="pre-label">Expected Sample Concentration <span style="color:var(--accent2)">*</span></div>
+    <div class="pre-detail"><input class="text-input full" id="std-sample-conc" type="text" placeholder="e.g. ~1 nM, with unit"></div>
+  </div>
+  <div class="std-row" style="border-bottom:none;">
+    <div class="pre-label">Dilution / Preconcentration Factor <span style="color:var(--accent2)">*</span></div>
+    <div class="pre-detail" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <input class="text-input full" id="std-dilution" type="text" placeholder="Enter 1 if no dilution or preconcentration was applied">
+      <span style="font-size:11px;color:var(--text-muted);font-style:italic;">Please enter 1 if no dilution or preconcentration was applied.</span>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+<!-- 08 INSTRUMENT CONSIDERATIONS -->
+<div class="section">
+  <div class="section-header">Section 7 — Instrument Considerations</div>
+  <div class="field-row" id="field-instrument-confirm">
+    <div class="field-label">Please confirm <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content" style="flex-direction:column;align-items:flex-start;gap:10px;padding:12px 14px;">
+      <label class="cb-label"><input type="checkbox" id="confirm-cps"><span class="cb-box"></span><span>ICPMS Signal will be kept &lt; 4 × 10<sup>6</sup> cps (counting mode)</span></label>
+      <label class="cb-label"><input type="checkbox" id="confirm-filtered"><span class="cb-box"></span><span>Sample is free of particles (or properly filtered)</span></label>
+      <label class="cb-label"><input type="checkbox" id="confirm-diluted"><span class="cb-box"></span><span>Sample has been appropriately diluted if necessary</span></label>
+    </div>
+  </div>
+</div>
+
+<!-- 09 USER CONFIRMATION -->
+<div class="section">
+  <div class="section-header">Section 8 — User Confirmation</div>
+  <div style="background:#fffbe6;border-bottom:1px solid var(--border);padding:10px 20px;font-size:12px;color:#7a6010;">
+    ⚠️ Users may be responsible for damage caused by improper sample preparation or inaccurate sample information.
+  </div>
+  <div class="field-row" id="field-user-agree">
+    <div class="field-label">Declaration <span style="color:var(--accent2)">*</span></div>
+    <div class="field-content" style="flex-direction:column;align-items:flex-start;gap:8px;padding:12px 14px;">
+      <div style="font-size:12.5px;color:var(--text);line-height:1.7;max-width:600px;">
+        I confirm that the information provided above is accurate to the best of my knowledge, and that sample preparation (including dilution and matrix conditions) has been appropriately considered prior to submission.
+      </div>
+      <label class="cb-label" style="margin-top:4px;">
+        <input type="checkbox" id="user-agree">
+        <span class="cb-box"></span>
+        <span style="font-weight:600;color:var(--accent);">I agree</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMIT PANEL -->
+<div class="submit-panel">
+  <div class="submit-row">
+    <button class="btn primary" onclick="previewWithValidation()">&#128269; Preview Full Form</button>
+    <button class="btn danger" onclick="resetForm()" style="margin-left:auto;">&#x21BA; Reset</button>
+  </div>
+</div>
+
+</div><!-- .page -->
+
+<!-- HIDDEN PDF RENDER TARGET -->
+<div id="pdf-render-target" aria-hidden="true"></div>
+
+<!-- REVIEW MODAL -->
+<div class="modal-wrap" id="review-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeReviewModal()" style="position:absolute;top:10px;right:14px;font-size:20px;cursor:pointer;color:rgba(255,255,255,.8);background:none;border:none;line-height:1;z-index:10;">&#215;</button>
+    <div class="modal-header">
+      <h2>&#128196; ICP-MS / seaFAST 使用申請表</h2>
+      <div class="modal-meta" id="modal-meta">— / — / —</div>
+    </div>
+    <div class="modal-body">
+      <div id="review-content"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="downloadPDF()" id="pdf-btn">&#128462; Download PDF</button>
+      <button class="btn success" onclick="validateAndSubmit()" id="submit-btn" style="margin-left:auto;">&#10003; Validate &amp; Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ELEMENTS=[
+  ['H',1,1,1,'nonmetal'],['He',2,18,1,'noble'],
+  ['Li',3,1,2,'alkali'],['Be',4,2,2,'earth'],['B',5,13,2,'metal'],['C',6,14,2,'nonmetal'],['N',7,15,2,'nonmetal'],['O',8,16,2,'nonmetal'],['F',9,17,2,'halogen'],['Ne',10,18,2,'noble'],
+  ['Na',11,1,3,'alkali'],['Mg',12,2,3,'earth'],['Al',13,13,3,'post'],['Si',14,14,3,'metal'],['P',15,15,3,'nonmetal'],['S',16,16,3,'nonmetal'],['Cl',17,17,3,'halogen'],['Ar',18,18,3,'noble'],
+  ['K',19,1,4,'alkali'],['Ca',20,2,4,'earth'],['Sc',21,3,4,'trans'],['Ti',22,4,4,'trans'],['V',23,5,4,'trans'],['Cr',24,6,4,'trans'],['Mn',25,7,4,'trans'],['Fe',26,8,4,'trans'],['Co',27,9,4,'trans'],['Ni',28,10,4,'trans'],['Cu',29,11,4,'trans'],['Zn',30,12,4,'trans'],['Ga',31,13,4,'post'],['Ge',32,14,4,'metal'],['As',33,15,4,'metal'],['Se',34,16,4,'nonmetal'],['Br',35,17,4,'halogen'],['Kr',36,18,4,'noble'],
+  ['Rb',37,1,5,'alkali'],['Sr',38,2,5,'earth'],['Y',39,3,5,'trans'],['Zr',40,4,5,'trans'],['Nb',41,5,5,'trans'],['Mo',42,6,5,'trans'],['Tc',43,7,5,'trans'],['Ru',44,8,5,'trans'],['Rh',45,9,5,'trans'],['Pd',46,10,5,'trans'],['Ag',47,11,5,'trans'],['Cd',48,12,5,'trans'],['In',49,13,5,'post'],['Sn',50,14,5,'post'],['Sb',51,15,5,'metal'],['Te',52,16,5,'metal'],['I',53,17,5,'halogen'],['Xe',54,18,5,'noble'],
+  ['Cs',55,1,6,'alkali'],['Ba',56,2,6,'earth'],['La',57,3,6,'lant'],['Ce',58,4,6,'lant'],['Pr',59,5,6,'lant'],['Nd',60,6,6,'lant'],['Pm',61,7,6,'lant'],['Sm',62,8,6,'lant'],['Eu',63,9,6,'lant'],['Gd',64,10,6,'lant'],['Tb',65,11,6,'lant'],['Dy',66,12,6,'lant'],['Ho',67,13,6,'lant'],['Er',68,14,6,'lant'],['Tm',69,15,6,'lant'],['Yb',70,16,6,'lant'],['Lu',71,17,6,'lant'],['Hf',72,4,6,'trans'],['Ta',73,5,6,'trans'],['W',74,6,6,'trans'],['Re',75,7,6,'trans'],['Os',76,8,6,'trans'],['Ir',77,9,6,'trans'],['Pt',78,10,6,'trans'],['Au',79,11,6,'trans'],['Hg',80,12,6,'trans'],['Tl',81,13,6,'post'],['Pb',82,14,6,'post'],['Bi',83,15,6,'post'],['Po',84,16,6,'metal'],['At',85,17,6,'halogen'],['Rn',86,18,6,'noble'],
+  ['Fr',87,1,7,'alkali'],['Ra',88,2,7,'earth'],['Ac',89,3,7,'act'],['Th',90,4,7,'act'],['Pa',91,5,7,'act'],['U',92,6,7,'act'],['Np',93,7,7,'act'],['Pu',94,8,7,'act'],['Am',95,9,7,'act'],['Cm',96,10,7,'act'],['Bk',97,11,7,'act'],['Cf',98,12,7,'act'],['Es',99,13,7,'act'],['Fm',100,14,7,'act'],['Md',101,15,7,'act'],['No',102,16,7,'act'],['Lr',103,17,7,'act'],['Rf',104,4,7,'trans'],['Db',105,5,7,'trans'],['Sg',106,6,7,'trans'],['Bh',107,7,7,'trans'],['Hs',108,8,7,'trans'],['Mt',109,9,7,'trans'],['Ds',110,10,7,'trans'],['Rg',111,11,7,'trans'],['Cn',112,12,7,'trans'],['Nh',113,13,7,'post'],['Fl',114,14,7,'post'],['Mc',115,15,7,'post'],['Lv',116,16,7,'post'],['Ts',117,17,7,'halogen'],['Og',118,18,7,'noble'],
+];
+const CAT_CLASS={alkali:'g-alkali',earth:'g-earth',trans:'g-trans',post:'g-post',metal:'g-metal',nonmetal:'g-nonmetal',halogen:'g-halogen',noble:'g-noble',lant:'g-lant',act:'g-act'};
+const PRESET_LR=new Set(['Y','Mo','Cd','In']);
+const PRESET_MR=new Set(['P','Ti','Mn','Fe','Co','Ni','Cu','Zn','Y','Mo','In','Al']);
+const selected=new Set(); // element symbols only
+
+// No mode — all elements stored as simple set
+
+function buildTable(){
+  const grid=document.getElementById('pt-grid');
+  const cells=Array(10).fill(null).map(()=>Array(18).fill(null));
+  ELEMENTS.forEach(([sym,num,grp,per,cat])=>{
+    let row,col;
+    if(cat==='lant'){row=8;col=num-57+2;}
+    else if(cat==='act'){row=9;col=num-89+2;}
+    else{row=per-1;col=grp-1;}
+    if(row>=0&&row<10&&col>=0&&col<18) cells[row][col]={sym,num,cat};
+  });
+  grid.innerHTML='';
+  for(let r=0;r<10;r++){
+    if(r===7){const g=document.createElement('div');g.style.cssText='grid-column:1/19;height:5px;';grid.appendChild(g);continue;}
+    for(let c=0;c<18;c++){
+      if((r===8||r===9)&&c===0){
+        const d=document.createElement('div');d.className='el spacer';d.innerHTML=r===8?'<span style="font-size:6px;color:#bbb;">Ln</span>':'<span style="font-size:6px;color:#bbb;">An</span>';grid.appendChild(d);
+        c++;const d2=document.createElement('div');d2.className='el spacer';grid.appendChild(d2);continue;
+      }
+      const cell=cells[r][c];
+      const div=document.createElement('div');
+      if(!cell){div.className='el spacer';}
+      else{
+        const{sym,num,cat}=cell;
+        div.className='el '+CAT_CLASS[cat];
+        div.id='el-'+sym;
+        div.innerHTML=`<span class="num">${num}</span><span class="sym">${sym}</span>`;
+        div.onclick=()=>toggleElement(sym,div);
+        div.title=`${sym} (Z=${num}) — click to select/deselect`;
+      }
+      grid.appendChild(div);
+    }
+  }
+}
+
+function toggleElement(sym,div){
+  if(selected.has(sym)){selected.delete(sym);}
+  else{selected.add(sym);}
+  updateSelected();
+}
+
+function updateSelected(){
+  const list=document.getElementById('selected-list');
+  const counter=document.getElementById('el-count');
+  ELEMENTS.forEach(([sym])=>{
+    const div=document.getElementById('el-'+sym);
+    if(!div) return;
+    div.classList.remove('selected-lr','selected-mr','selected-hr');
+    if(selected.has(sym)) div.classList.add('selected-lr'); // reuse selected-lr CSS (black bg)
+  });
+  counter.textContent=selected.size+' element'+(selected.size!==1?'s':'')+' selected';
+  if(selected.size===0){list.innerHTML='<span style="font-size:11px;color:var(--text-muted);">None selected</span>';return;}
+  list.innerHTML='';
+  selected.forEach(sym=>{
+    const tag=document.createElement('span');
+    tag.className='selected-tag t-lr'; // neutral black style
+    tag.innerHTML=`${sym} <span class="rm" onclick="removeEl('${sym}')">×</span>`;
+    list.appendChild(tag);
+  });
+}
+
+function removeEl(sym){selected.delete(sym);updateSelected();}
+
+function loadPreset(){
+  selected.clear();
+  PRESET_LR.forEach(s=>selected.add(s));
+  PRESET_MR.forEach(s=>selected.add(s));
+  updateSelected();
+}
+function clearElements(){selected.clear();updateSelected();}
+
+// ── GOOGLE CALENDAR ──
+// Uses analysis type from Section 2, run dates from Section 2, fixed 08:00-18:00
+function buildCalendarURL(){
+  const startDate=document.getElementById('run-date-start').value;
+  const endDate=document.getElementById('run-date-end').value||startDate;
+  if(!startDate) return null;
+
+  const operator=document.getElementById('op-name').value||'Unknown';
+  const analysisType=document.querySelector('input[name="analysis-type"]:checked')?.value||'ICP-MS';
+  const sampleType=document.querySelector('input[name="sample-type"]:checked')?.value||'—';
+  const sampleOther=document.getElementById('st-other-text')?.value||'';
+  const sampleLabel=sampleType==='Other'?(sampleOther||'Other'):sampleType;
+
+  // Title: [Instrument] User — SampleType
+  const title=`[${analysisType}] ${operator} — ${sampleLabel}`;
+
+  // Fixed 08:00 start, 18:00 end
+  const fmtDT=(d,hh,mm)=>d.replace(/-/g,'')+'T'+hh+mm+'00';
+  const start=fmtDT(startDate,'08','00');
+  const end=fmtDT(endDate,'18','00');
+
+  // Minimal description + link back to form
+  const formURL=window.location.href;
+  const details=[
+    `User: ${operator}`,
+    `Instrument: ${analysisType}`,
+    `Sample: ${sampleLabel}`,
+    ``,
+    `Form: ${formURL}`
+  ].join('\n');
+
+  const params=new URLSearchParams({
+    action:'TEMPLATE',
+    text:title,
+    dates:`${start}/${end}`,
+    details,
+    sf:'true',
+    output:'xml'
+  });
+  return 'https://calendar.google.com/calendar/render?'+params.toString();
+}
+
+function openCalendarDirect(){
+  const url=buildCalendarURL();
+  if(!url){alert('Please fill in the Instrument Run Start Date in Section 2 first.');return;}
+  window.open(url,'_blank');
+}
+
+// ── SUBMIT ──
+function collectData(){
+  const elements=[];
+  selected.forEach(s=>elements.push(s));
+  const sampleTypeVal=document.querySelector('input[name="sample-type"]:checked')?.value||'';
+  return{
+    affiliation:document.getElementById('affiliation').value,
+    operator:document.getElementById('op-name').value,
+    email:document.getElementById('op-email').value,
+    emailAsContact:document.getElementById('email-as-contact').checked,
+    tel:document.getElementById('op-tel').value,
+    submissionDate:document.getElementById('op-date').value,
+    analysisType:document.querySelector('input[name="analysis-type"]:checked')?.value||'',
+    instrumentRunStart:document.getElementById('run-date-start').value,
+    instrumentRunEnd:document.getElementById('run-date-end').value,
+    sampleName:document.getElementById('sample-name').value,
+    sampleType:sampleTypeVal==='Other'?(document.getElementById('st-other-text').value||'Other'):sampleTypeVal,
+    pretreatment:{
+      filtered:document.querySelector('input[name="filtered"]:checked')?.value||'',
+      acidified:document.querySelector('input[name="acidified"]:checked')?.value||'',
+      preConcentrated:document.querySelector('input[name="precon"]:checked')?.value||'',
+      digestion:document.querySelector('input[name="digestion"]:checked')?.value||'',
+      uvOxidation:document.querySelector('input[name="uv-oxidation"]:checked')?.value||'',
+      chelation:document.querySelector('input[name="chelation"]:checked')?.value||'',
+      other:document.getElementById('pretreat-other')?.value||''
+    },
+
+    analyzedElements:elements,
+    standardRange:document.getElementById('std-range').value,
+    sampleConcentration:document.getElementById('std-sample-conc').value,
+    dilutionFactor:document.getElementById('std-dilution').value,
+    instrumentConfirm:{
+      cps:document.getElementById('confirm-cps').checked,
+      filtered:document.getElementById('confirm-filtered').checked,
+      diluted:document.getElementById('confirm-diluted').checked
+    },
+    userAgreed:document.getElementById('user-agree').checked
+  };
+}
+
+function validate(){
+  const errors=[];
+  document.querySelectorAll('.field-invalid').forEach(el=>el.classList.remove('field-invalid'));
+  document.querySelectorAll('.text-input.invalid').forEach(el=>el.classList.remove('invalid'));
+  const nameInput=document.getElementById('op-name');
+  const emailInput=document.getElementById('op-email');
+  const sampleNameInput=document.getElementById('sample-name');
+  const runDateStart=document.getElementById('run-date-start');
+  const runDateEnd=document.getElementById('run-date-end');
+  // Section 1
+  if(!document.getElementById('affiliation').value.trim()){errors.push('Affiliation Lab is required');document.getElementById('affiliation').classList.add('invalid');}
+  if(!nameInput.value.trim()){errors.push('Name is required');nameInput.classList.add('invalid');}
+  if(!emailInput.value.trim()){errors.push('Email is required');emailInput.classList.add('invalid');}
+  if(!document.getElementById('op-date').value){errors.push('Submission Date is required');document.getElementById('op-date').classList.add('invalid');}
+  // Section 2
+  const analysisType=document.querySelector('input[name="analysis-type"]:checked');
+  if(!analysisType){errors.push('Section 2: Analysis Type is required');document.getElementById('field-analysistype').classList.add('field-invalid');}
+  if(!runDateStart.value){errors.push('Section 2: Instrument Run Start Date is required');runDateStart.classList.add('invalid');}
+  if(!runDateEnd.value){errors.push('Section 2: Instrument Run End Date is required');runDateEnd.classList.add('invalid');}
+  if(runDateStart.value&&runDateEnd.value&&runDateEnd.value<runDateStart.value){errors.push('Section 2: End Date must be on or after Start Date');runDateEnd.classList.add('invalid');}
+  // Section 3
+  if(!sampleNameInput.value.trim()){errors.push('Sample ID / Name is required');sampleNameInput.classList.add('invalid');document.getElementById('field-samplename').classList.add('field-invalid');}
+  if(!document.querySelector('input[name="sample-type"]:checked')){errors.push('Sample Type is required');document.getElementById('field-sampletype').classList.add('field-invalid');}
+  // Section 5
+  if(selected.size===0) errors.push('Section 5: Please select at least one element from the periodic table (click to select)');
+  // Section 6
+  if(!document.getElementById('std-range').value.trim()) errors.push('Section 6: Standard Concentration Range is required');
+  if(!document.getElementById('std-sample-conc').value.trim()) errors.push('Section 6: Expected Sample Concentration is required');
+  if(!document.getElementById('std-dilution').value.trim()) errors.push('Section 6: Dilution / Preconcentration Factor is required');
+
+  // Instrument confirmations
+  if(!document.getElementById('confirm-cps').checked||!document.getElementById('confirm-filtered').checked||!document.getElementById('confirm-diluted').checked){
+    errors.push('Section 7: Please confirm all three instrument considerations');
+    document.getElementById('field-instrument-confirm').classList.add('field-invalid');
+  }
+  // User agreement
+  if(!document.getElementById('user-agree').checked){errors.push('Section 8: Please read and check "I agree"');document.getElementById('field-user-agree').classList.add('field-invalid');}
+  return errors;
+}
+
+async function validateAndSubmit(){
+  const btn=document.getElementById('submit-btn');
+
+  // 1. Generate PDF blob via html2canvas + jsPDF
+  const data=collectData();
+  const docID=buildDocID(data);
+
+  btn.textContent='⏳ 處理中...';
+  btn.disabled=true;
+
+  try{
+    // 2. Render PDF (reuse same render logic as downloadPDF)
+    const pdfBase64=await generatePDFBase64(data,docID);
+
+    // 3. Send to Apps Script
+    const payload={
+      token:'holab-rcec-2026',
+      docID:docID,
+      formData:data,
+      pdfBase64:pdfBase64,
+    };
+
+    const response=await fetch('https://script.google.com/macros/s/AKfycbzpndnRMUY6uifmWgJOxxR8VlIh1xUmWgRUQnC_3KEru82YVRrXiBefHua3LdF-1pfzbw/exec',{
+      method:'POST',
+      body:JSON.stringify(payload),
+    });
+    const result=await response.json();
+
+    if(result.success){
+      // Show success inside modal
+      document.getElementById('review-content').insertAdjacentHTML('afterbegin',`
+        <div style="background:#e8f5ed;border:1.5px solid #1a6e3a;padding:12px 16px;margin-bottom:16px;border-radius:2px;">
+          <strong style="color:#1a6e3a;">&#10003; 送出成功！</strong><br>
+          <span style="font-size:12px;">
+            PDF 已上傳至 Google Drive・信件已寄出・日曆事件已建立<br>
+            <a href="${result.fileURL}" target="_blank" style="color:#1a3a5c;">查看 Drive PDF</a>
+            &nbsp;|&nbsp;
+            <a href="${result.eventURL}" target="_blank" style="color:#1a3a5c;">查看日曆事件</a>
+          </span>
+        </div>`);
+      btn.textContent='✓ 已送出';
+      btn.style.background='#1a6e3a';
+    } else {
+      alert('送出失敗：'+result.error);
+      btn.textContent='✓ Validate & Submit';
+      btn.disabled=false;
+    }
+  } catch(err){
+    alert('連線錯誤：'+err.message);
+    btn.textContent='✓ Validate & Submit';
+    btn.disabled=false;
+  }
+}
+
+// ── REVIEW MODAL ──
+function buildDocID(data){
+  // Format: [Instrument]_[YYYYMMDD]_[HHMM]_[Name]
+  // e.g. seaFAST_20260518_1344_LinYenPo  or  ICP-MS_20260518_1345_LinYenPo
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=(data.instrumentRunStart||'').replace(/-/g,'')||now.getFullYear()+pad(now.getMonth()+1)+pad(now.getDate());
+  const timeStr=pad(now.getHours())+pad(now.getMinutes());
+  const instr=(data.analysisType||'ICP-MS');
+  const name=(data.operator||'User').replace(/\s+/g,'');
+  return `${instr}_${dateStr}_${timeStr}_${name}`;
+}
+
+function previewWithValidation(){
+  // Validate first — if errors, show banner and stop
+  const errors=validate();
+  const valBanner=document.getElementById('val-banner');
+  if(errors.length>0){
+    valBanner.className='validation-banner show';
+    valBanner.innerHTML='<strong>&#9888; 以下必填欄位尚未填寫：</strong><ul style="margin-top:6px;padding-left:18px;">'+errors.map(e=>`<li>${e}</li>`).join('')+'</ul>';
+    valBanner.scrollIntoView({behavior:'smooth',block:'nearest'});
+    return;
+  }
+  valBanner.className='validation-banner';
+  openReviewModal();
+}
+
+function openReviewModal(){
+  const data=collectData();
+  const docID=buildDocID(data);
+
+  // Update modal meta banner — show only docID
+  const metaEl=document.getElementById('modal-meta');
+  if(metaEl) metaEl.textContent=docID;
+
+  const matrixList=Object.entries(data.sampleMatrix||{}).filter(([k,v])=>v===true).map(([k])=>k);
+  if(data.sampleMatrix?.other) matrixList.push('Other: '+data.sampleMatrix.other);
+  document.getElementById('review-content').innerHTML=`
+  <table class="review-table">
+    <tr><td colspan="2" style="background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;">Section 1 — Basic Information</td></tr>
+    <tr><td>Affiliation Lab</td><td>${data.affiliation||'—'}</td></tr>
+    <tr><td>Name</td><td>${data.operator||'—'}</td></tr>
+    <tr><td>Email</td><td>${data.email||'—'}${data.emailAsContact?' <span style="font-size:10px;color:var(--accent);">(Contact)</span>':''}</td></tr>
+    <tr><td>Tel</td><td>${data.tel||'—'}</td></tr>
+    <tr><td>Submission Date</td><td>${data.submissionDate||'—'}</td></tr>
+    <tr><td colspan="2" style="background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;">Section 2 — Type of Analysis</td></tr>
+    <tr><td>Analysis Type</td><td><strong>${data.analysisType||'—'}</strong></td></tr>
+    <tr><td>Run Start Date</td><td><strong>${data.instrumentRunStart||'—'}</strong></td></tr>
+    <tr><td>Run End Date</td><td><strong>${data.instrumentRunEnd||'—'}</strong></td></tr>
+    <tr><td>Time (fixed)</td><td>08:00 → 18:00</td></tr>
+    <tr><td colspan="2" style="background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;">Section 3 — Sample Information</td></tr>
+    <tr><td>Sample ID / Name</td><td>${data.sampleName||'—'}</td></tr>
+    <tr><td>Sample Type</td><td>${data.sampleType||'—'}</td></tr>
+    <tr><td colspan="2" style="background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;">Section 4 — Pretreatment</td></tr>
+    <tr><td>Filtered</td><td>${data.pretreatment.filtered||'—'}</td></tr>
+    <tr><td>Acidified</td><td>${data.pretreatment.acidified||'—'}</td></tr>
+    <tr><td>Digestion</td><td>${data.pretreatment.digestion||'—'}</td></tr>
+    <tr><td>UV Oxidation</td><td>${data.pretreatment.uvOxidation||'—'}</td></tr>
+    <tr><td>Chelation/Preconcentration</td><td>${data.pretreatment.chelation||'—'}</td></tr>
+    <tr><td>Other Pretreatment</td><td>${data.pretreatment.other||'—'}</td></tr>
+    <tr><td>Sample Matrix</td><td>${matrixList.join(', ')||'—'}</td></tr>
+    <tr><td colspan="2" style="background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;">Section 5 — Analyzed Elements</td></tr>
+    <tr><td>Elements</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${data.analyzedElements.length>0?data.analyzedElements.join(', '):'None selected'}</td></tr>
+    <tr><td colspan="2" style="background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;">Section 6 — Standards & Concentration</td></tr>
+    <tr><td>Standard Concentration Range</td><td>${data.standardRange||'—'}</td></tr>
+    <tr><td>Expected Sample Concentration</td><td>${data.sampleConcentration||'—'}</td></tr>
+    <tr><td>Dilution / Preconcentration Factor</td><td>${data.dilutionFactor||'—'}</td></tr>
+    <tr><td colspan="2" style="background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;">Confirmations</td></tr>
+    <tr><td>Instrument Considerations</td><td>${[data.instrumentConfirm?.cps?'CPS ✓':'',data.instrumentConfirm?.filtered?'Filtered ✓':'',data.instrumentConfirm?.diluted?'Dilution ✓':''].filter(Boolean).join('  ')||'—'}</td></tr>
+    <tr><td>User Declaration</td><td>${data.userAgreed?'✓ I agree':'✗ Not confirmed'}</td></tr>
+  </table>`;
+  document.getElementById('review-modal').classList.add('open');
+}
+function closeReviewModal(){document.getElementById('review-modal').classList.remove('open');}
+document.getElementById('review-modal').addEventListener('click',function(e){if(e.target===this) closeReviewModal();});
+
+function resetForm(){
+  if(!confirm('Reset all fields?')) return;
+  document.querySelectorAll('input[type="text"],input[type="date"],input[type="time"],input[type="number"],textarea').forEach(el=>el.value='');
+  document.querySelectorAll('input[type="checkbox"]').forEach(el=>el.checked=false);
+  document.querySelectorAll('input[type="radio"]').forEach(el=>el.checked=false);
+  selected.clear();updateSelected();
+  document.getElementById('val-banner').className='validation-banner';
+  document.getElementById('success-banner').className='success-banner';
+}
+
+buildTable();
+loadPreset();
+
+// ── PDF GENERATION ──
+// ── global buildPDFContent (used by both downloadPDF and generatePDFBase64) ──
+function buildPDFContent(target, data, docID){
+  const matrixList=Object.entries(data.sampleMatrix||{}).filter(([k,v])=>v===true).map(([k])=>k);
+  if(data.sampleMatrix?.other) matrixList.push('Other: '+data.sampleMatrix.other);
+  const pretreatRows=[
+    ['Filtered',data.pretreatment.filtered||'—'],
+    ['Acidified',data.pretreatment.acidified||'—'],
+    ['Digestion',data.pretreatment.digestion||'—'],
+    ['UV Oxidation',data.pretreatment.uvOxidation||'—'],
+    ['Chelation / Preconcentration',data.pretreatment.chelation||'—'],
+    ['Other Pretreatment',data.pretreatment.other||'—'],
+    ['Sample Matrix',matrixList.join(', ')||'—'],
+  ];
+  const confirmList=[
+    data.instrumentConfirm?.cps?'ICPMS Signal < 4×10⁶ cps ✓':'',
+    data.instrumentConfirm?.filtered?'Sample free of particles ✓':'',
+    data.instrumentConfirm?.diluted?'Appropriately diluted ✓':'',
+  ].filter(Boolean).join('  |  ')||'—';
+  const rows=arr=>arr.map(([k,v])=>`<tr><td>${k}</td><td>${v||'—'}</td></tr>`).join('');
+  const secTitle=t=>`<tr><td colspan="2" class="pdf-section-title">${t}</td></tr>`;
+  target.innerHTML=`
+  <div class="pdf-header">
+    <h1>ICP-MS / seaFAST 使用申請表</h1>
+    <div class="pdf-meta">${docID}</div>
+  </div>
+  <div class="pdf-body">
+    <table class="pdf-table">
+      ${secTitle('Section 1 — Basic Information')}
+      ${rows([['Affiliation Lab',data.affiliation],['Name',data.operator],['Email',data.email+(data.emailAsContact?' (Contact)':'')],['Tel',data.tel],['Submission Date',data.submissionDate]])}
+      ${secTitle('Section 2 — Type of Analysis')}
+      ${rows([['Analysis Type',data.analysisType],['Run Start Date',data.instrumentRunStart],['Run End Date',data.instrumentRunEnd],['Time (fixed)','08:00 → 18:00']])}
+      ${secTitle('Section 3 — Sample Information')}
+      ${rows([['Sample ID / Name',data.sampleName],['Sample Type',data.sampleType]])}
+      ${secTitle('Section 4 — Pretreatment')}
+      ${rows(pretreatRows)}
+      ${secTitle('Section 5 — Analyzed Elements')}
+      <tr><td>Elements</td><td style="font-family:monospace;font-size:10px;word-break:break-all;">${data.analyzedElements.length>0?data.analyzedElements.join(', '):'None selected'}</td></tr>
+      ${secTitle('Section 6 — Standards & Concentration')}
+      ${rows([['Standard Concentration Range',data.standardRange],['Expected Sample Concentration',data.sampleConcentration],['Dilution / Preconcentration Factor',data.dilutionFactor]])}
+      ${secTitle('Section 7 & 8 — Confirmations')}
+      <tr><td>Instrument Considerations</td><td>${confirmList}</td></tr>
+      <tr><td>User Declaration</td><td>${data.userAgreed?'✓ I agree':'✗ Not confirmed'}</td></tr>
+    </table>
+  </div>
+  <div class="pdf-footer">${docID} | Generated: ${new Date().toLocaleString()}</div>`;
+}
+
+// ── shared PDF builder ──
+async function buildPDF(target){
+  const canvas=await html2canvas(target,{
+    scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,
+  });
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const imgData=canvas.toDataURL('image/png');
+  const pdfW=pdf.internal.pageSize.getWidth();
+  const pdfH=pdf.internal.pageSize.getHeight();
+  const imgH=(canvas.height*pdfW)/canvas.width;
+  let yPos=0;
+  while(yPos<imgH){
+    if(yPos>0) pdf.addPage();
+    pdf.addImage(imgData,'PNG',0,-yPos,pdfW,imgH);
+    yPos+=pdfH;
+  }
+  return pdf;
+}
+
+async function generatePDFBase64(data,docID){
+  // Build the hidden render target content (same as downloadPDF)
+  const target=document.getElementById('pdf-render-target');
+  buildPDFContent(target,data,docID);
+  await new Promise(r=>setTimeout(r,200));
+  const pdf=await buildPDF(target);
+  const base64=pdf.output('datauristring').split(',')[1];
+  target.innerHTML='';
+  return base64;
+}
+
+async function downloadPDF(){
+  const data = collectData();
+  const docID = buildDocID(data);
+  const btn = document.getElementById('pdf-btn');
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+
+  const matrixList = Object.entries(data.sampleMatrix||{}).filter(([k,v])=>v===true).map(([k])=>k);
+  if(data.sampleMatrix?.other) matrixList.push('Other: '+data.sampleMatrix.other);
+
+  const pretreatRows = [
+    ['Filtered', data.pretreatment.filtered||'—'],
+    ['Acidified', data.pretreatment.acidified||'—'],
+    ['Digestion', data.pretreatment.digestion||'—'],
+    ['UV Oxidation', data.pretreatment.uvOxidation||'—'],
+    ['Chelation / Preconcentration', data.pretreatment.chelation||'—'],
+    ['Other Pretreatment', data.pretreatment.other||'—'],
+    ['Sample Matrix', matrixList.join(', ')||'—'],
+  ];
+
+  const confirmList = [
+    data.instrumentConfirm?.cps ? 'ICPMS Signal < 4×10⁶ cps ✓' : '',
+    data.instrumentConfirm?.filtered ? 'Sample free of particles ✓' : '',
+    data.instrumentConfirm?.diluted ? 'Appropriately diluted ✓' : '',
+  ].filter(Boolean).join('  |  ') || '—';
+
+  function rows(arr){
+    return arr.map(([k,v])=>`<tr><td>${k}</td><td>${v||'—'}</td></tr>`).join('');
+  }
+  function secTitle(t){
+    return `<tr><td colspan="2" class="pdf-section-title">${t}</td></tr>`;
+  }
+
+  const target = document.getElementById('pdf-render-target');
+  buildPDFContent(target, data, docID);
+
+  // Wait for render
+  await new Promise(r => setTimeout(r, 200));
+
+  try {
+    const pdf = await buildPDF(target);
+    pdf.save(docID + '.pdf');
+  } catch(err){
+    console.error('PDF error:', err);
+    alert('PDF generation failed. Please try again.');
+  }
+
+  target.innerHTML = '';
+  btn.textContent = '📄 Download PDF';
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
